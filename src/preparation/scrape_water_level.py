@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
-from utils import AuthError, get_auth_data, get_url, post_url
+from src.preparation.utils import AuthError, get_auth_data, get_url, post_url
+from src.utils import is_data_exists, open_json, write_data
 
 import re
 import json
@@ -57,18 +58,27 @@ def get_posts_uids(auth_cookie, district, pool, subpools):
     :return:
     """
 
-    def get_data(url, params, target_string, field='uid', target_name=None):
-        def get_data_from_list(lst, target):
+    def get_data(url, req_params, target_string, field='uid', target_name=None):
+        def get_data_from_list(work_list, target):
             result = next(x[field]
-                   for x in lst
-                   if target in x['NAME'])
+                          for x in work_list
+                          if target in x['NAME'])
             if result == -1:
                 raise Exception(f"{target_name} {target} не найден")
             return result
 
-        r = get_url(url, params=params, cookies=auth_cookie)
-        soup = BeautifulSoup(r.text, 'lxml')
-        lst = json.loads(soup.text)
+        prefix = re.search(r"/(\w+)\.php", url).group(1)
+        file_name = f'water_{prefix}_{target_name}_{target_string}.json'
+        if is_data_exists(file_name, is_raw=True):
+            lst = open_json(file_name, is_raw=True)
+        else:
+            r = get_url(url, params=req_params, cookies=auth_cookie)
+            soup = BeautifulSoup(r.text, 'lxml')
+            lst = json.loads(soup.text)
+
+            write_data(file_name, data=json.dumps(lst, ensure_ascii=False),
+                       is_raw=True)
+
         if type(target_string) == list:
             # возврат всех uid при пустом списке используется для постов
             if len(target_string) == 0:
@@ -80,26 +90,30 @@ def get_posts_uids(auth_cookie, district, pool, subpools):
         else:
             return get_data_from_list(lst, target_string)
 
+    posts_file_name = 'water_posts_uids.json'
+    if is_data_exists(posts_file_name, is_raw=True):
+        return open_json(posts_file_name, is_raw=True)
+
     # Получение ид бассейного округа по его названию
     params = {'sea': 0}
     district_uid = get_data(GET_DISTRICTS_URL, params,
-                           target_string=district,
-                           target_name='Бассейновый округ')
-    #district_uid = 17
+                            target_string=district,
+                            target_name='Бассейновый округ')
+    # district_uid = 17
 
     # Получение ид бассейна по его названию через ид бассейнового округа
     params = {'uid': district_uid}
     pool_uid = get_data(GET_POOLS_URL, params,
-                           target_string=pool,
-                           target_name='Бассейн')
-    #pool_uid = 17
+                        target_string=pool,
+                        target_name='Бассейн')
+    # pool_uid = 17
 
     # Получение списка подбассейнов по их названиям через ид бассейна
     params = {'uid': pool_uid}
     subpool_uids = get_data(GET_SUBPOOLS_URL, params,
-                           target_string=subpools,
-                           target_name='Подбассейны')
-    #subpool_uids = [114, 124]
+                            target_string=subpools,
+                            target_name='Подбассейны')
+    # subpool_uids = [114, 124]
 
     posts = []
     for subpool_uid in subpool_uids:
@@ -117,7 +131,11 @@ def get_posts_uids(auth_cookie, district, pool, subpools):
         posts.extend(get_data(GET_POSTS_URL, params,
                               field='kod_hp', target_string=list()))
 
-    return list(set(posts))  # преобразование к set очищает от дубликатов
+    posts = list(set(posts))  # преобразование к set очищает list от дубликатов
+    write_data(posts_file_name, data=json.dumps(posts, ensure_ascii=False),
+               is_raw=True)
+    return posts
+
 
 def main():
     auth_cookie = get_auth_cookies()
@@ -125,19 +143,13 @@ def main():
     # параметры, по которым необходимо получить наблюдения
     start_year = 2008
     end_year = 2017
-    # years = ','.join([x for x in range(years_tuple)])
+
     years = [x for x in range(start_year, end_year + 1)]
     district = 'Енисейский бассейновый округ'
     pool = 'Енисей (российская часть бассейна)'
     subpools = ['Подкаменная Тунгуска', 'Нижняя Тунгуска']
 
     posts_uids = get_posts_uids(auth_cookie, district, pool, subpools)
-    '''
-    posts_uids = ['09397', '09568', '09396', '09406', '09408', '09421', '09387',
-                  '09420', '09386', '09393', '09416', '09389', '09523', '09417',
-                  '09422', '09413', '09403', '09419', '09415', '09405', '09499',
-                  '09410', '09392', '09560', '09390', '09404', '09518', '09388']
-    '''
 
 
 if __name__ == '__main__':

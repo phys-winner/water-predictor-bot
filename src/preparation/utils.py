@@ -19,12 +19,15 @@ def get_url(url, params=None, cookies=None):
 
     return r
 
+
 def post_url(url, data=None, cookies=None, allow_redirects=True):
-    r = requests.post(url, data=data, cookies=cookies)
+    r = requests.post(url, data=data, cookies=cookies,
+                      allow_redirects=allow_redirects)
     r.raise_for_status()
     sleep(1)  # ждём, чтобы не перегрузить сайт запросами
 
     return r
+
 
 def get_auth_data():
     """ Возврат данных для авторизации на сайте АИС ГМВО.
@@ -32,7 +35,7 @@ def get_auth_data():
     :return: словарь с данными
     """
     form_data = {
-        'rememberme': 0,       # скрытый флаг Запомнить меня
+        'rememberme': 0,  # скрытый флаг Запомнить меня
         'cmdweblogin': 'Вход'
     }
     form_data.update(water_level_login)
