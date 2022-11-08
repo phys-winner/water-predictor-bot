@@ -1,1 +1,2 @@
-/.idea
+# Secret data, example - /src/secrets.example.py
+/src/secrets.py
