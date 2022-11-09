@@ -1,12 +1,13 @@
 from bs4 import BeautifulSoup
 from src.preparation.utils import AuthError, get_auth_data, get_url, post_url
-from src.utils import is_data_exists, open_json, write_data
+from src.utils import *
 
 import re
 import json
 
 BASE = 'https://gmvo.skniivh.ru/'
 LOGIN_URL = BASE + 'index.php?id=1'
+GET_DATA_URL = BASE + 'index.php?id=544&sname=form14_output&spar=%26variant%3D0'
 
 API_POSTFIX = BASE + 'eais/forms/'
 GET_DISTRICTS_URL = API_POSTFIX + 'get_bo.php'
@@ -47,15 +48,35 @@ def get_auth_cookies():
 
 
 def get_posts_uids(auth_cookie, district, pool, subpools):
-    """ Получение данных ежедневных наблюдений через формы страницы
-        https://gmvo.skniivh.ru/index.php?id=180
+    """ Получение uid постов с формы https://gmvo.skniivh.ru/index.php?id=180
 
-        Обращение
+        Алгоритм работы:
+        1. Во время загрузки формы для получения списка бассейновых округов
+           происходит GET запрос к
+           https://gmvo.skniivh.ru/eais/forms/get_bo.php
+
+           Функция получает этот список для поиска uid заданного округа
+
+        2. После этого для получения списка бассейнов, принадлежащих текущему
+           округу, делается GET запрос с параметром uid округа
+
+           https://gmvo.skniivh.ru/eais/forms/get_rb.php?uid=
+
+           Функция получает этот список для поиска uid заданного бассейна
+
+        3. Также происходит с получением списка подбассейнов по uid бассейна:
+           https://gmvo.skniivh.ru/eais/forms/get_sb.php?uid=
+
+        4. Нажатие на кнопку Найти для получения списка всех постов делает GET
+           запрос с множеством параметров (см. ниже, GET_POSTS_URL) к
+           https://gmvo.skniivh.ru/eais/forms/get_hpr.php
+
+        Результаты всех запросов сохраняются в data\raw\
     :param auth_cookie: куки с авторизацией из функции get_auth_cookies()
     :param district: бассейновый округ
     :param pool: бассейн
     :param subpools: подбассейны (list)
-    :return:
+    :return: список uid постов наблюдения
     """
 
     def get_data(url, req_params, target_string, field='uid', target_name=None):
@@ -68,11 +89,16 @@ def get_posts_uids(auth_cookie, district, pool, subpools):
             return result
 
         prefix = re.search(r"/(\w+)\.php", url).group(1)
-        file_name = f'water_{prefix}_{target_name}_{target_string}.json'
+        if target_name is None:
+            file_name = f'water_{prefix}_{req_params["ssb"]}.json'
+        else:
+            file_name = f'water_{prefix}_{target_name}_{target_string}.json'
         if is_data_exists(file_name, is_raw=True):
             lst = open_json(file_name, is_raw=True)
         else:
             r = get_url(url, params=req_params, cookies=auth_cookie)
+            # Открытие текста запроса в bs4 для последующего корректного
+            # перевода в json вместе с декодированием юникод последовательностей
             soup = BeautifulSoup(r.text, 'lxml')
             lst = json.loads(soup.text)
 
@@ -136,8 +162,39 @@ def get_posts_uids(auth_cookie, district, pool, subpools):
                is_raw=True)
     return posts
 
+def get_water_data(auth_cookie, years, posts_uids):
+    """ Получение данных ежедневных наблюдений по постам наблюдений.
+
+    :param auth_cookie: куки с авторизацией из функции get_auth_cookies()
+    :param years: список годов, за которые нужно получить данные
+    :param posts_uids: список uid постов наблюдений
+    :return:
+    """
+    form_data = {
+        'submit': 1,
+        'pid': 180,
+        'table': 'gm_waterlevel_river,'
+                 'gm_waterlevel_river_day,'
+                 'gm_waterlevel_river_month,'
+                 'gm_waterlevel_river_decade',
+        'data_year[]': years,
+        'uid_form': 7,
+        'data_kod_hpr[]': posts_uids
+    }
+    r = post_url(GET_DATA_URL, data=form_data, cookies=auth_cookie)
+    write_data(DATA_WATER_RAW, data=r.text, is_raw=True)
+
 
 def main():
+    """ Запуск процесса парсинга данных наблюдений с постов с сайта АИС ГМВО.
+    Порядок действий:
+    1. Авторизация.
+    2. Получение списка с идентификаторами постов наблюдения.
+    3. Получение необходимых данных с сохранением в data\raw\water_data.html
+    """
+    if is_data_exists(DATA_WATER_RAW, is_raw=True):
+        print('Данные ежедневных наблюдений по постам уже были получены')
+        return
     auth_cookie = get_auth_cookies()
 
     # параметры, по которым необходимо получить наблюдения
@@ -150,6 +207,7 @@ def main():
     subpools = ['Подкаменная Тунгуска', 'Нижняя Тунгуска']
 
     posts_uids = get_posts_uids(auth_cookie, district, pool, subpools)
+    get_water_data(auth_cookie, years, posts_uids)
 
 
 if __name__ == '__main__':

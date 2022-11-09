@@ -4,6 +4,8 @@ import re
 import os
 
 
+DATA_WATER_RAW = 'water_data.html'
+
 def _get_filepath(file_name, is_raw):
     file_name = re.sub(r'[^\wА-Яа-яёЁ_.)( -]', '', file_name)  # чистка имени
     result = os.path.join(os.getcwd(), 'data')
