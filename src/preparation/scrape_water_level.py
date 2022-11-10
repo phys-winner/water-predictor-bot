@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup
-from src.preparation.utils import AuthError, get_auth_data, get_url, post_url
+from src.preparation.utils import AuthError, get_auth_data
 from src.utils import *
 
 import re

@@ -1,12 +1,36 @@
+from time import sleep
+
 import json
 import os.path
 import re
 import os
+import requests
 
 DATA_GISMETEO_CITIES = 'gismeteo_cities.xml'
 DATA_WATER_RAW = 'water_data.html'
 DATA_POSTS_RAW = 'water_posts_data.json'
 
+# для получения данных к некоторым сайтам (gismeteo) нужно имитировать браузер
+DEFAULT_HEADER = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+                               'AppleWebKit/537.36 (KHTML, like Gecko) '
+                               'Chrome/102.0.5005.63 Safari/537.36'}
+
+def get_url(url, params=None, cookies=None):
+    r = requests.get(url, params=params, cookies=cookies,
+                     headers=DEFAULT_HEADER)
+    r.raise_for_status()
+    sleep(1)  # ждём, чтобы не перегрузить сайт запросами
+
+    return r
+
+
+def post_url(url, data=None, cookies=None, allow_redirects=True):
+    r = requests.post(url, data=data, cookies=cookies,
+                      allow_redirects=allow_redirects, headers=DEFAULT_HEADER)
+    r.raise_for_status()
+    sleep(1)  # ждём, чтобы не перегрузить сайт запросами
+
+    return r
 
 def _get_filepath(file_name, is_raw):
     file_name = re.sub(r'[^\wА-Яа-яёЁ_.)( -]', '', file_name)  # чистка имени

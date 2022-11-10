@@ -1,7 +1,4 @@
-from time import sleep
-
 from src.secrets import water_level_login
-import requests
 
 
 class AuthError(Exception):
@@ -10,23 +7,6 @@ class AuthError(Exception):
 
     def __str__(self):
         return repr(self.value)
-
-
-def get_url(url, params=None, cookies=None, headers=None):
-    r = requests.get(url, params=params, cookies=cookies, headers=headers)
-    r.raise_for_status()
-    sleep(1)  # ждём, чтобы не перегрузить сайт запросами
-
-    return r
-
-
-def post_url(url, data=None, cookies=None, allow_redirects=True):
-    r = requests.post(url, data=data, cookies=cookies,
-                      allow_redirects=allow_redirects)
-    r.raise_for_status()
-    sleep(1)  # ждём, чтобы не перегрузить сайт запросами
-
-    return r
 
 
 def get_auth_data():
