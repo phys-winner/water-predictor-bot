@@ -3,8 +3,9 @@ import os.path
 import re
 import os
 
-
 DATA_WATER_RAW = 'water_data.html'
+DATA_POSTS_RAW = 'water_posts_data.json'
+
 
 def _get_filepath(file_name, is_raw):
     file_name = re.sub(r'[^\wА-Яа-яёЁ_.)( -]', '', file_name)  # чистка имени
@@ -24,6 +25,19 @@ def is_data_exists(file_name, is_raw=True):
     """
     file_path = _get_filepath(file_name, is_raw)
     return os.path.isfile(file_path)
+
+
+def open_file(file_name, is_raw):
+    """ Открыть файл
+
+    :param file_name: название файла с данными
+    :param is_raw: сырые ли данные? если да - смотреть в папке raw, иначе в
+        processed
+    :return:
+    """
+    file_path = _get_filepath(file_name, is_raw)
+    with open(file_path, mode='r', encoding='utf-8') as file:
+        return file.read()
 
 
 def open_json(file_name, is_raw):

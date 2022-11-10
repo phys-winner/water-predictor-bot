@@ -47,7 +47,7 @@ def get_auth_cookies():
         raise AuthError('Неизвестная ошибка при авторизации')
 
 
-def get_posts_uids(auth_cookie, district, pool, subpools):
+def get_data_posts(auth_cookie, district, pool, subpools):
     """ Получение uid постов с формы https://gmvo.skniivh.ru/index.php?id=180
 
         Алгоритм работы:
@@ -89,12 +89,10 @@ def get_posts_uids(auth_cookie, district, pool, subpools):
             return result
 
         prefix = re.search(r"/(\w+)\.php", url).group(1)
-        if target_name is None:
-            file_name = f'water_{prefix}_{req_params["ssb"]}.json'
-        else:
-            file_name = f'water_{prefix}_{target_name}_{target_string}.json'
+        file_name = f'water_{prefix}_{target_name}_{target_string}.json'
         if is_data_exists(file_name, is_raw=True):
-            lst = open_json(file_name, is_raw=True)
+            file = open_file(file_name, is_raw=True)
+            lst = json.loads(file)
         else:
             r = get_url(url, params=req_params, cookies=auth_cookie)
             # Открытие текста запроса в bs4 для последующего корректного
@@ -106,19 +104,15 @@ def get_posts_uids(auth_cookie, district, pool, subpools):
                        is_raw=True)
 
         if type(target_string) == list:
-            # возврат всех uid при пустом списке используется для постов
-            if len(target_string) == 0:
-                return [x[field] for x in lst]
-
             # получение нескольких uid по списку, используется для подбассейнов
             return [int(get_data_from_list(lst, target))
                     for target in target_string]
         else:
             return get_data_from_list(lst, target_string)
 
-    posts_file_name = 'water_posts_uids.json'
-    if is_data_exists(posts_file_name, is_raw=True):
-        return open_json(posts_file_name, is_raw=True)
+    if is_data_exists(DATA_POSTS_RAW, is_raw=True):
+        file = open_file(DATA_POSTS_RAW, is_raw=True)
+        return json.loads(file)
 
     # Получение ид бассейного округа по его названию
     params = {'sea': 0}
@@ -141,7 +135,7 @@ def get_posts_uids(auth_cookie, district, pool, subpools):
                             target_name='Подбассейны')
     # subpool_uids = [114, 124]
 
-    posts = []
+    posts = {}  # uid: name
     for subpool_uid in subpool_uids:
         params = {
             'table': 'gm_waterlevel_river,'
@@ -154,20 +148,28 @@ def get_posts_uids(auth_cookie, district, pool, subpools):
             'shep': 0,
             'uid_form': 7
         }
-        posts.extend(get_data(GET_POSTS_URL, params,
-                              field='kod_hp', target_string=list()))
+        file_name = f'water_get_hpr_{subpool_uid}.json'
+        r = get_url(GET_POSTS_URL, params=params, cookies=auth_cookie)
 
-    posts = list(set(posts))  # преобразование к set очищает list от дубликатов
-    write_data(posts_file_name, data=json.dumps(posts, ensure_ascii=False),
+        soup = BeautifulSoup(r.text, 'lxml')
+        lst = json.loads(soup.text)
+
+        posts.update({entry['kod_hp']: entry['name_hp'] for entry in lst})
+
+        write_data(file_name, data=json.dumps(lst, ensure_ascii=False),
+                   is_raw=True)
+
+    write_data(DATA_POSTS_RAW, data=json.dumps(posts, ensure_ascii=False),
                is_raw=True)
     return posts
 
-def get_water_data(auth_cookie, years, posts_uids):
+
+def get_water_data(auth_cookie, years, posts_data):
     """ Получение данных ежедневных наблюдений по постам наблюдений.
 
     :param auth_cookie: куки с авторизацией из функции get_auth_cookies()
     :param years: список годов, за которые нужно получить данные
-    :param posts_uids: список uid постов наблюдений
+    :param posts_data: список постов наблюдений, словарь uid: название
     :return:
     """
     form_data = {
@@ -179,7 +181,7 @@ def get_water_data(auth_cookie, years, posts_uids):
                  'gm_waterlevel_river_decade',
         'data_year[]': years,
         'uid_form': 7,
-        'data_kod_hpr[]': posts_uids
+        'data_kod_hpr[]': posts_data.keys()
     }
     r = post_url(GET_DATA_URL, data=form_data, cookies=auth_cookie)
     write_data(DATA_WATER_RAW, data=r.text, is_raw=True)
@@ -194,20 +196,20 @@ def main():
     """
     if is_data_exists(DATA_WATER_RAW, is_raw=True):
         print('Данные ежедневных наблюдений по постам уже были получены')
-        return
-    auth_cookie = get_auth_cookies()
+    else:
+        auth_cookie = get_auth_cookies()
 
-    # параметры, по которым необходимо получить наблюдения
-    start_year = 2008
-    end_year = 2017
+        # параметры, по которым необходимо получить наблюдения
+        start_year = 2008
+        end_year = 2017
 
-    years = [x for x in range(start_year, end_year + 1)]
-    district = 'Енисейский бассейновый округ'
-    pool = 'Енисей (российская часть бассейна)'
-    subpools = ['Подкаменная Тунгуска', 'Нижняя Тунгуска']
+        years = [x for x in range(start_year, end_year + 1)]
+        district = 'Енисейский бассейновый округ'
+        pool = 'Енисей (российская часть бассейна)'
+        subpools = ['Подкаменная Тунгуска', 'Нижняя Тунгуска']
 
-    posts_uids = get_posts_uids(auth_cookie, district, pool, subpools)
-    get_water_data(auth_cookie, years, posts_uids)
+        posts_data = get_data_posts(auth_cookie, district, pool, subpools)
+        get_water_data(auth_cookie, years, posts_data)
 
 
 if __name__ == '__main__':
