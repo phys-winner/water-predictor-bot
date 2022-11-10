@@ -100,8 +100,7 @@ def get_data_posts(auth_cookie, district, pool, subpools):
             soup = BeautifulSoup(r.text, 'lxml')
             lst = json.loads(soup.text)
 
-            write_data(file_name, data=json.dumps(lst, ensure_ascii=False),
-                       is_raw=True)
+            write_data(file_name, data=lst, is_raw=True)
 
         if type(target_string) == list:
             # получение нескольких uid по списку, используется для подбассейнов
@@ -156,11 +155,9 @@ def get_data_posts(auth_cookie, district, pool, subpools):
 
         posts.update({entry['kod_hp']: entry['name_hp'] for entry in lst})
 
-        write_data(file_name, data=json.dumps(lst, ensure_ascii=False),
-                   is_raw=True)
+        write_data(file_name, data=lst, is_raw=True)
 
-    write_data(DATA_POSTS_RAW, data=json.dumps(posts, ensure_ascii=False),
-               is_raw=True)
+    write_data(DATA_POSTS_RAW, data=posts, is_raw=True)
     return posts
 
 

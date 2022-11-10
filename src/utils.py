@@ -32,8 +32,9 @@ def post_url(url, data=None, cookies=None, allow_redirects=True):
 
     return r
 
+
 def _get_filepath(file_name, is_raw):
-    file_name = re.sub(r'[^\wА-Яа-яёЁ_.)( -]', '', file_name)  # чистка имени
+    file_name = re.sub(r'[^\wА-Яа-яёЁ_.)( -\\/]', '', file_name)  # чистка имени
     result = os.path.join(os.getcwd(), 'data')
     if is_raw:
         return os.path.join(result, 'raw', file_name)
@@ -65,19 +66,6 @@ def open_file(file_name, is_raw):
         return file.read()
 
 
-def open_json(file_name, is_raw):
-    """ Открыть json файл
-
-    :param file_name: название файла с данными
-    :param is_raw: сырые ли данные? если да - смотреть в папке raw, иначе в
-        processed
-    :return:
-    """
-    file_path = _get_filepath(file_name, is_raw)
-    with open(file_path, mode='r', encoding='utf-8') as file:
-        return json.loads(file.read())
-
-
 def write_data(file_name, data, is_raw):
     """ Записать данные в файл
 
@@ -90,6 +78,10 @@ def write_data(file_name, data, is_raw):
     file_path = _get_filepath(file_name, is_raw)
     if is_data_exists(file_path, is_raw):
         os.remove(file_path)
+    else:
+        # создание директорий при необходимости
+        base_dir = os.path.split(file_path)[0]
+        os.makedirs(base_dir, exist_ok=True)
 
     if type(data) == list or type(data) == dict:
         data = json.dumps(data, ensure_ascii=False)
