@@ -12,8 +12,8 @@ class AuthError(Exception):
         return repr(self.value)
 
 
-def get_url(url, params=None, cookies=None):
-    r = requests.get(url, params=params, cookies=cookies)
+def get_url(url, params=None, cookies=None, headers=None):
+    r = requests.get(url, params=params, cookies=cookies, headers=headers)
     r.raise_for_status()
     sleep(1)  # ждём, чтобы не перегрузить сайт запросами
 
