@@ -6,7 +6,6 @@ import re
 import os
 import requests
 
-DATA_GISMETEO_CITIES = 'gismeteo_cities.xml'
 DATA_WATER_RAW = 'water_data.html'
 DATA_POSTS_RAW = 'water_posts_data.json'
 
