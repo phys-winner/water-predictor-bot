@@ -49,7 +49,11 @@ def is_data_exists(file_name, is_raw=True):
     :return:
     """
     file_path = _get_filepath(file_name, is_raw)
-    return os.path.isfile(file_path)
+    if os.path.isfile(file_path):
+        if os.path.getsize(file_path) > 0:
+            return True
+        os.remove(file_path)
+    return False
 
 
 def open_file(file_name, is_raw):
