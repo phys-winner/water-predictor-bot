@@ -4,21 +4,28 @@ import json
 import os.path
 import re
 import os
+import csv
 import requests
 
+# данные со всеми наблюдениями всех необходимых пунктов наблюдений
 DATA_WATER_RAW = 'water_data.html'
+# словарь id_поста: локация_поста
 DATA_POSTS_RAW = 'water_posts_data.json'
+# словарь id_поста: локация_поста, название_города, id_гисметео,
+# резерв_id_гисметео, страница_вики
+DATA_POSTS_FULL_RAW = 'posts_fulldata.json'
 
 # для получения данных к некоторым сайтам (gismeteo) нужно имитировать браузер
 DEFAULT_HEADER = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
                                'AppleWebKit/537.36 (KHTML, like Gecko) '
                                'Chrome/102.0.5005.63 Safari/537.36'}
+WAIT_SLEEP_TIME = 2
 
 def get_url(url, params=None, cookies=None):
     r = requests.get(url, params=params, cookies=cookies,
                      headers=DEFAULT_HEADER)
     r.raise_for_status()
-    sleep(1)  # ждём, чтобы не перегрузить сайт запросами
+    sleep(WAIT_SLEEP_TIME)  # ждём, чтобы не перегрузить сайт запросами
 
     return r
 
@@ -56,6 +63,15 @@ def is_data_exists(file_name, is_raw=True):
     return False
 
 
+def _delete_if_exist(file_path, is_raw):
+    if is_data_exists(file_path, is_raw):
+        os.remove(file_path)
+    else:
+        # создание директорий при необходимости
+        base_dir = os.path.split(file_path)[0]
+        os.makedirs(base_dir, exist_ok=True)
+
+
 def open_file(file_name, is_raw):
     """ Открыть файл
 
@@ -79,15 +95,30 @@ def write_data(file_name, data, is_raw):
     :return:
     """
     file_path = _get_filepath(file_name, is_raw)
-    if is_data_exists(file_path, is_raw):
-        os.remove(file_path)
-    else:
-        # создание директорий при необходимости
-        base_dir = os.path.split(file_path)[0]
-        os.makedirs(base_dir, exist_ok=True)
+    _delete_if_exist(file_path, is_raw)
 
     if type(data) == list or type(data) == dict:
         data = json.dumps(data, ensure_ascii=False)
 
     with open(file_path, mode='w', encoding='utf-8') as file:
         file.write(data)
+
+
+def write_csv(file_name, header, data, is_raw):
+    """ Записать данные в файл
+
+    :param file_name: название файла с данными
+    :param header: заголовок с названиями столбцов
+    :param data: данные для записи (list)
+    :param is_raw: сырые ли данные? если да - смотреть в папке raw, иначе в
+        processed
+    :return:
+    """
+    file_path = _get_filepath(file_name, is_raw)
+    _delete_if_exist(file_path, is_raw)
+
+    with open(file_path, mode='w', encoding='utf-8', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(header)
+        writer.writerows(data)
+
