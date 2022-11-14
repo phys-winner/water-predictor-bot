@@ -20,6 +20,8 @@ DATA_POSTS_FULL_RAW = 'posts_fulldata.json'
 DEFAULT_HEADER = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
                                 'AppleWebKit/537.36 (KHTML, like Gecko) '
                                 'Chrome/102.0.5005.63 Safari/537.36'}
+START_YEAR = 2008
+END_YEAR = 2017
 WAIT_SLEEP_TIME = 2
 
 
@@ -47,7 +49,7 @@ def post_url(url, data=None, cookies=None, allow_redirects=True):
 
 
 # file methods
-def _get_filepath(file_name, is_raw):
+def get_filepath(file_name, is_raw):
     file_name = re.sub(r'[^\wА-Яа-яёЁ_.)( -\\/]', '', file_name)  # чистка имени
     result = os.path.join(os.getcwd(), 'data')
     if is_raw:
@@ -63,7 +65,7 @@ def is_data_exists(file_name, is_raw=True):
         processed
     :return:
     """
-    file_path = _get_filepath(file_name, is_raw)
+    file_path = get_filepath(file_name, is_raw)
     if os.path.isfile(file_path):
         if os.path.getsize(file_path) > 0:
             return True
@@ -88,7 +90,7 @@ def open_file(file_name, is_raw):
         processed
     :return:
     """
-    file_path = _get_filepath(file_name, is_raw)
+    file_path = get_filepath(file_name, is_raw)
     with open(file_path, mode='r', encoding='utf-8') as file:
         return file.read()
 
@@ -102,7 +104,7 @@ def write_data(file_name, data, is_raw):
         processed
     :return:
     """
-    file_path = _get_filepath(file_name, is_raw)
+    file_path = get_filepath(file_name, is_raw)
     _delete_if_exist(file_path, is_raw)
 
     if type(data) == list or type(data) == dict:
@@ -122,7 +124,7 @@ def write_csv(file_name, header, data, is_raw):
         processed
     :return:
     """
-    file_path = _get_filepath(file_name, is_raw)
+    file_path = get_filepath(file_name, is_raw)
     _delete_if_exist(file_path, is_raw)
 
     with open(file_path, mode='w', encoding='utf-8', newline='') as file:

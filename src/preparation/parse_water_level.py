@@ -289,10 +289,7 @@ def main():
         print('Signed in')
 
         # параметры, по которым необходимо получить наблюдения
-        start_year = 2008
-        end_year = 2017
-
-        years = [x for x in range(start_year, end_year + 1)]
+        years = [x for x in range(START_YEAR, END_YEAR + 1)]
         district = 'Енисейский бассейновый округ'
         pool = 'Енисей (российская часть бассейна)'
         subpools = ['Подкаменная Тунгуска', 'Нижняя Тунгуска']
