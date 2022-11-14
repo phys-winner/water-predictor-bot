@@ -10,7 +10,8 @@ import requests
 DATA_WATER_RAW = 'water_data.html'  # данные со всеми наблюдениями
 DATA_POSTS_RAW = 'water_posts_data.json'  # словарь id_поста: локация_поста
 DATA_WATER_LEVEL = 'water_level.csv'  # датасет с данными наблюдений
-DATA_WEATHER = 'weather.csv'  # датасет с погодой
+DATA_WEATHER_TRAIN = 'weather_train.csv'  # датасет с погодой за 2008-2017
+DATA_WEATHER_TEST = 'weather_test.csv'  # датасет с погодой за 2018
 
 # словарь id_поста: локация_поста, название_города, id_гисметео,
 # резерв_id_гисметео, страница_вики
