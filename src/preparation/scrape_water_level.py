@@ -4,6 +4,7 @@ from src.utils import *
 
 import re
 import json
+from htmlmin import minify
 
 BASE = 'https://gmvo.skniivh.ru/'
 LOGIN_URL = BASE + 'index.php?id=1'
@@ -154,7 +155,6 @@ def get_data_posts(auth_cookie, district, pool, subpools):
         lst = json.loads(soup.text)
 
         posts.update({entry['kod_hp']: entry['name_hp'] for entry in lst})
-
         write_data(file_name, data=lst, is_raw=True)
 
     write_data(DATA_POSTS_RAW, data=posts, is_raw=True)
@@ -181,7 +181,7 @@ def get_water_data(auth_cookie, years, posts_data):
         'data_kod_hpr[]': posts_data.keys()
     }
     r = post_url(GET_DATA_URL, data=form_data, cookies=auth_cookie)
-    write_data(DATA_WATER_RAW, data=r.text, is_raw=True)
+    write_data(DATA_WATER_RAW, data=minify(r.text), is_raw=True)
 
 
 def main():
@@ -195,6 +195,7 @@ def main():
         print('Данные ежедневных наблюдений по постам уже были получены')
     else:
         auth_cookie = get_auth_cookies()
+        print('Signed in')
 
         # параметры, по которым необходимо получить наблюдения
         start_year = 2008
@@ -206,7 +207,9 @@ def main():
         subpools = ['Подкаменная Тунгуска', 'Нижняя Тунгуска']
 
         posts_data = get_data_posts(auth_cookie, district, pool, subpools)
+        print('Obtained posts data')
         get_water_data(auth_cookie, years, posts_data)
+        print('Got info about water level')
 
 
 if __name__ == '__main__':
