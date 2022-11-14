@@ -264,6 +264,7 @@ def form_dataset():
                 '''
 
     header = ['uid', 'date', 'water_level']
+    result_data = sorted(result_data)
     write_csv(DATA_WATER_LEVEL, header, result_data, is_raw=True)
     # print(result_data)
 
