@@ -4,6 +4,7 @@ from src.utils import *
 
 import re
 import json
+from calendar import monthrange
 from htmlmin import minify
 
 BASE = 'https://gmvo.skniivh.ru/'
@@ -184,13 +185,101 @@ def get_water_data(auth_cookie, years, posts_data):
     write_data(DATA_WATER_RAW, data=minify(r.text), is_raw=True)
 
 
-def main():
-    """ Запуск процесса парсинга данных наблюдений с постов с сайта АИС ГМВО.
-    Порядок действий:
-    1. Авторизация.
-    2. Получение списка с идентификаторами постов наблюдения.
-    3. Получение необходимых данных с сохранением в data\raw\water_data.html
+def form_dataset():
+    """ Формирование датасета: id_поста,дата,уровень_воды
     """
+    water_data = open_file(DATA_WATER_RAW, is_raw=True)
+    soup = BeautifulSoup(water_data, 'lxml')
+
+    # данные с информацией о постах находятся в таблицах с классом table,
+    info_tables = soup.findAll('table', {'class': ['table']})
+
+    # в таблицах с классом calend помимо необходимых наблюдений есть данные
+    # о статистике за год (низший, средний и высший уровни за год)
+    # они не нужны, т.к. при необходимости их можно вычислить средствами pandas
+    data_tables = soup.findAll('table', {'class': ['calend']})[::2]
+
+    if len(info_tables) != len(data_tables):
+        raise Exception('Число таблиц с информацией не совпадает '
+                        'с числом таблиц с наблюдениями.')
+
+    result_data = []  # id_поста,дата,уровень_воды
+    result_info = {}  # id_поста,отметка_нуля,система_высот
+    id_list = ['kod_hpr', 'year', 'altitude', 'alt_system']
+    for i in range(len(info_tables)):
+        # информация
+        info_table = info_tables[i]
+        infos = [info.text for info in info_table.find_all('p', id=id_list)]
+        uid = infos[0]
+        year = int(infos[1])
+        [altitude, alt_system] = infos[2:]
+
+        if uid in result_info and result_info[uid] != [altitude, alt_system]:
+            raise Exception(f'У поста {uid} изменена отметка нуля '
+                            f'или система высот')
+        result_info[uid] = [altitude, alt_system]
+
+        # наблюдение
+        data_table = data_tables[i]
+        data_rows = data_table.find_all('tr')[1:]  # убираем заголовок
+        data_rows = data_rows[:31]  # убираем статистическую информацию
+        if data_rows[0].find('td').text != '1':
+            raise Exception('В таблице не обнаружено первое число.')
+        for row in data_rows:
+            cells = row.find_all('td')
+            day = int(cells[0].text)
+            for month in range(0, 12):
+                # не во всех месяцах есть данные за все 31 день, пропускаем их
+                if day > monthrange(year, month + 1)[1]:
+                    continue
+                water_level = cells[month + 1].text.strip()
+                if len(water_level) == 0 or '-' in water_level:
+                    continue  # данные не велись, пример - Кербо 2008
+                elif water_level == 'прмз' or \
+                        water_level == 'прсх' or \
+                        water_level == 'пр' or \
+                        water_level == 'прс' or \
+                        water_level == 'прм':
+                    # первые 2 случая: река промерзла или пересохла
+                    # расшифровка остальных не указана
+                    water_level = 0
+                else:
+                    try:
+                        water_level = re.search(r'\d+', water_level).group(0)
+                    except Exception as e:
+                        print(row)
+                        print(water_level)
+                        raise e
+                result_data.append([uid,
+                                    format_data(year, month + 1, day),
+                                    water_level])
+                # for day in range(0, monthrange(year, month + 1)[1]):
+                # print(month + 1, day + 1)
+        '''
+        for month in range(0, 12):
+            row = data_rows[month]
+            print(row)
+            #for day in range(0, monthrange(year, month + 1)[1]):
+                #print(month + 1, day + 1)
+                '''
+
+    header = ['uid', 'date', 'water_level']
+    write_csv(DATA_WATER_LEVEL, header, result_data, is_raw=True)
+    # print(result_data)
+
+
+def main():
+    """ Запуск процесса парсинга данных наблюдений с постов с сайта АИС ГМВО
+    с последующим формированием датасета.
+    Порядок действий:
+    1. Авторизация;
+    2. Получение списка с идентификаторами постов наблюдения;
+    3. Получение необходимых данных с сохранением в data\raw\water_data.html;
+    4. Формирование датасета.
+    """
+    if is_data_exists(DATA_WATER_LEVEL, is_raw=True):
+        print('Датасет со всеми данными наблюдений уже сформирован')
+        return
     if is_data_exists(DATA_WATER_RAW, is_raw=True):
         print('Данные ежедневных наблюдений по постам уже были получены')
     else:
@@ -210,6 +299,7 @@ def main():
         print('Obtained posts data')
         get_water_data(auth_cookie, years, posts_data)
         print('Got info about water level')
+    form_dataset()
 
 
 if __name__ == '__main__':

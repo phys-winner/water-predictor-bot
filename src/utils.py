@@ -7,20 +7,26 @@ import os
 import csv
 import requests
 
-# данные со всеми наблюдениями всех необходимых пунктов наблюдений
-DATA_WATER_RAW = 'water_data.html'
-# словарь id_поста: локация_поста
-DATA_POSTS_RAW = 'water_posts_data.json'
+DATA_WATER_RAW = 'water_data.html'  # данные со всеми наблюдениями
+DATA_POSTS_RAW = 'water_posts_data.json'  # словарь id_поста: локация_поста
+DATA_WATER_LEVEL = 'water_level.csv'  # датасет с данными наблюдений
+
 # словарь id_поста: локация_поста, название_города, id_гисметео,
 # резерв_id_гисметео, страница_вики
 DATA_POSTS_FULL_RAW = 'posts_fulldata.json'
 
+
 # для получения данных к некоторым сайтам (gismeteo) нужно имитировать браузер
 DEFAULT_HEADER = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
-                               'AppleWebKit/537.36 (KHTML, like Gecko) '
-                               'Chrome/102.0.5005.63 Safari/537.36'}
+                                'AppleWebKit/537.36 (KHTML, like Gecko) '
+                                'Chrome/102.0.5005.63 Safari/537.36'}
 WAIT_SLEEP_TIME = 2
 
+
+def format_data(year, month, day):
+    return f'{year}-{month:02d}-{day:02d}'
+
+# requests methods
 def get_url(url, params=None, cookies=None):
     r = requests.get(url, params=params, cookies=cookies,
                      headers=DEFAULT_HEADER)
@@ -38,7 +44,7 @@ def post_url(url, data=None, cookies=None, allow_redirects=True):
 
     return r
 
-
+# file methods
 def _get_filepath(file_name, is_raw):
     file_name = re.sub(r'[^\wА-Яа-яёЁ_.)( -\\/]', '', file_name)  # чистка имени
     result = os.path.join(os.getcwd(), 'data')
