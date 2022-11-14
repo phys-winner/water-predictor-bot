@@ -232,16 +232,18 @@ def form_dataset():
                 if day > monthrange(year, month + 1)[1]:
                     continue
                 water_level = cells[month + 1].text.strip()
-                if len(water_level) == 0 or '-' in water_level:
-                    continue  # данные не велись, пример - Кербо 2008
-                elif water_level == 'прмз' or \
+                if len(water_level) == 0 or \
+                        '-' in water_level or \
+                        water_level == 'прмз' or \
                         water_level == 'прсх' or \
                         water_level == 'пр' or \
                         water_level == 'прс' or \
                         water_level == 'прм':
-                    # первые 2 случая: река промерзла или пересохла
+                    # пусто или тире - данные не велись, пример - Кербо 2008
+                    # прмз - река промерзла или пересохла
+                    # прмз - река промерзла или пересохла
                     # расшифровка остальных не указана
-                    water_level = 0
+                    continue
                 else:
                     try:
                         water_level = re.search(r'\d+', water_level).group(0)
