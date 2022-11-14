@@ -10,6 +10,7 @@ import requests
 DATA_WATER_RAW = 'water_data.html'  # данные со всеми наблюдениями
 DATA_POSTS_RAW = 'water_posts_data.json'  # словарь id_поста: локация_поста
 DATA_WATER_LEVEL = 'water_level.csv'  # датасет с данными наблюдений
+DATA_WEATHER = 'weather.csv'  # датасет с погодой
 
 # словарь id_поста: локация_поста, название_города, id_гисметео,
 # резерв_id_гисметео, страница_вики
@@ -25,6 +26,7 @@ WAIT_SLEEP_TIME = 2
 
 def format_data(year, month, day):
     return f'{year}-{month:02d}-{day:02d}'
+
 
 # requests methods
 def get_url(url, params=None, cookies=None):
