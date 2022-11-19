@@ -12,6 +12,9 @@ DATA_POSTS_RAW = 'water_posts_data.json'  # словарь id_поста: лок
 DATA_WATER_LEVEL = 'water_level.csv'  # датасет с данными наблюдений
 DATA_WEATHER = 'weather.csv'  # датасет с погодой за 2008-2017
 DATA_WEATHER_TARGET = 'weather_target.csv'  # датасет с погодой за 2018
+DATA_BOUNDARIES = 'boundaries.json'  # список с пороговыми значениями
+
+DATA_PROCESSED_TRAIN = 'train_data.csv'  # готовый датасет для обучения модели
 
 # словарь id_поста: локация_поста, название_города, id_гисметео,
 # резерв_id_гисметео, страница_вики
