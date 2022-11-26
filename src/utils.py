@@ -4,6 +4,7 @@ import os
 import os.path
 import re
 from time import sleep
+from datetime import datetime
 
 import requests
 
@@ -94,7 +95,14 @@ def open_file(file_name, is_raw):
         processed
     :return:
     """
+
     file_path = get_filepath(file_name, is_raw)
+
+    # изменять время создания и модификации файла перед его открытием,
+    # что позволяет найти неиспользуемые файлы по дате создания
+    timestamp = datetime.now().timestamp()
+    os.utime(file_path, (timestamp, timestamp))
+
     with open(file_path, mode='r', encoding='utf-8') as file:
         return file.read()
 
