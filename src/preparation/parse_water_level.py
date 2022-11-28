@@ -68,7 +68,7 @@ def get_data_posts(auth_cookie, district, pool, subpools):
         3. Также происходит с получением списка подбассейнов по uid бассейна:
            https://gmvo.skniivh.ru/eais/forms/get_sb.php?uid=
 
-        4. Нажатие на кнопку Найти для получения списка всех постов делает GET
+        4. Нажатие на кнопку "Найти" для получения списка всех постов делает GET
            запрос с множеством параметров (см. ниже, GET_POSTS_URL) к
            https://gmvo.skniivh.ru/eais/forms/get_hpr.php
 
@@ -190,10 +190,10 @@ def form_dataset():
     water_data = open_file(DATA_WATER_RAW, is_raw=True)
     soup = BeautifulSoup(water_data, 'lxml')
 
-    # данные с информацией о постах находятся в таблицах с классом table,
+    # Данные с информацией о постах находятся в таблицах с классом table
     info_tables = soup.findAll('table', {'class': ['table']})
 
-    # в таблицах с классом calend помимо необходимых наблюдений есть данные
+    # В таблицах с классом calend помимо необходимых наблюдений есть данные
     # о статистике за год (низший, средний и высший уровни за год)
     # они не нужны, т.к. при необходимости их можно вычислить средствами pandas
     data_tables = soup.findAll('table', {'class': ['calend']})[::2]
