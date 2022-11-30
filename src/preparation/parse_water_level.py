@@ -149,13 +149,22 @@ def get_data_posts(auth_cookie, district, pool, subpools):
             'uid_form': 7
         }
         file_name = f'water_get_hpr_{subpool_uid}.json'
-        r = get_url(GET_POSTS_URL, params=params, cookies=auth_cookie)
+        if is_data_exists(file_name, is_raw=True):
+            subpool_info = open_file(file_name, is_raw=True)
+            lst = json.loads(subpool_info)
+        else:
+            r = get_url(GET_POSTS_URL, params=params, cookies=auth_cookie)
+            soup = BeautifulSoup(r.text, 'lxml')
+            subpool_info = soup.text
 
-        soup = BeautifulSoup(r.text, 'lxml')
-        lst = json.loads(soup.text)
+            lst = json.loads(subpool_info)
+            write_data(file_name, data=lst, is_raw=True)
 
-        posts.update({entry['kod_hp']: entry['name_hp'] for entry in lst})
-        write_data(file_name, data=lst, is_raw=True)
+        posts.update({entry['kod_hp']: {'name': entry['name_hp'],
+                                        'subpool_id': entry['attachment'],
+                                        'cadid': entry['CADID'],
+                                        'water_site': entry['name_wo']}
+                      for entry in lst})
 
     write_data(DATA_POSTS_RAW, data=posts, is_raw=True)
     return posts
