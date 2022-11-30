@@ -100,8 +100,8 @@ def open_file(file_name, is_raw):
 
     # изменять время создания и модификации файла перед его открытием,
     # что позволяет найти неиспользуемые файлы по дате создания
-    timestamp = datetime.now().timestamp()
-    os.utime(file_path, (timestamp, timestamp))
+    #timestamp = datetime.now().timestamp()
+    #os.utime(file_path, (timestamp, timestamp))
 
     with open(file_path, mode='r', encoding='utf-8') as file:
         return file.read()
