@@ -1,5 +1,5 @@
-# Secret data, example - /src/secrets.example.py
-/src/secrets.py
+# Secret data, example - /src/secret_auth.example.py
+/src/secret_auth.py
 
 # Jupyter Notebooks
 .ipynb_checkpoints
