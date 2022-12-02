@@ -8,9 +8,10 @@ from telegram.ext import CallbackContext, ConversationHandler
 from telegram.ext import CallbackQueryHandler
 from telegram.ext import Updater, CommandHandler
 
-from src.secrets import tg_bot_token
+from src.secret_auth import tg_bot_token
 from src.strings_ru import *
 from src.utils import *
+from src.predict import Predictor
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -27,6 +28,7 @@ posts_info = json.loads(posts_info)
 uids_list = list(posts_info.keys())
 year_list = [x for x in range(2018, datetime.now().year + 1)]
 
+predictor = Predictor(posts_info)
 
 def invalid_data_msg(update: Update):
     update.callback_query.message.reply_text(INVALID_DATA_MESSAGE,
@@ -141,9 +143,11 @@ def predict(update: Update, context: CallbackContext):
     uid, year, month = check_callback_date(update)
     if not uid:
         return ConversationHandler.END
-
-    update.callback_query.message.edit_text(PREDICT_MESSAGE.format(uid, year, month),
-                                            reply_markup=None)
+    result = predictor.predict(uid, year, month)
+    print(result)
+    update.callback_query.message.edit_text(str(result), reply_markup=None)
+    #update.callback_query.message.edit_text(PREDICT_MESSAGE.format(uid, year, month),
+    #                                        reply_markup=None)
     return ConversationHandler.END
 
 

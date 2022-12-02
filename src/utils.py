@@ -12,13 +12,16 @@ DATA_WATER_RAW = 'water_data.html'  # данные со всеми наблюд�
 DATA_POSTS_RAW = 'water_posts_data.json'  # словарь id_поста: локация_поста
 DATA_WATER_LEVEL = 'water_level.csv'  # датасет с данными наблюдений
 DATA_WEATHER = 'weather.csv'  # датасет с погодой за 2008-2017
-DATA_BOUNDARIES = 'boundaries.json'  # список с пороговыми значениями
+# список с мин-макс данными для нормализации
+DATA_NORMALIZATION = 'normalization_info.json'
 
 DATA_PROCESSED_TRAIN = 'train_data.csv'  # готовый датасет для обучения модели
 
 # словарь id_поста: локация_поста, название_города, id_гисметео,
 # резерв_id_гисметео, страница_вики
 DATA_POSTS_FULL_RAW = 'posts_fulldata.json'
+
+XGBOOST_MODEL = 'xgboost_model.json'
 
 # для получения данных к некоторым сайтам (gismeteo) нужно имитировать браузер
 DEFAULT_HEADER = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
@@ -126,7 +129,7 @@ def write_data(file_name, data, is_raw):
 
 
 def write_csv(file_name, header, data, is_raw):
-    """ Записать данные в файл
+    """ Записать данные в csv файл
 
     :param file_name: название файла с данными
     :param header: заголовок с названиями столбцов
@@ -142,3 +145,8 @@ def write_csv(file_name, header, data, is_raw):
         writer = csv.writer(file)
         writer.writerow(header)
         writer.writerows(data)
+
+
+def get_xgboost_path():
+    return os.path.join(os.getcwd(), 'models', XGBOOST_MODEL)
+
