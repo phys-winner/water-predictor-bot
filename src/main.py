@@ -63,7 +63,7 @@ def check_callback_date(update: Update):
             month = int(callback_data[2])
 
             if (year == datetime.now().year
-                and month > datetime.now().month) \
+                and month > datetime.now().month + 1) \
                     or month > 12 \
                     or month < 1:
                 is_valid &= invalid_data_msg(update)
@@ -122,7 +122,7 @@ def select_month(update: Update, context: CallbackContext):
     reply_keyboard = []
     last_month = 12
     if year == datetime.now().year:
-        last_month = datetime.now().month - 1 + 1
+        last_month = datetime.now().month - 1
 
     reply_row = []
     for month in range(1, last_month + 1):
