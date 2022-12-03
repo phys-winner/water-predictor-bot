@@ -155,7 +155,7 @@ def select_year(update: Update, context: CallbackContext):
     keyboard = [keyboard]
     keyboard.append([InlineKeyboardButton(
         text=BACK_LABEL,
-        callback_data='start')])
+        callback_data='query-' + posts_info[uid]['subpool_id'])])
     reply_markup = InlineKeyboardMarkup(keyboard)
     update.callback_query.message.edit_text(formatted_msg,
                                             parse_mode='HTML',
