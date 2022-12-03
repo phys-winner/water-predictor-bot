@@ -12,10 +12,10 @@ from telegram.ext import CallbackContext, ConversationHandler
 from telegram.ext import CallbackQueryHandler
 from telegram.ext import Updater, CommandHandler
 
-from src.secret_auth import tg_bot_token
-from src.strings_ru import *
-from src.utils import *
-from src.predict import Predictor
+from secret_auth import tg_bot_token
+from strings_ru import *
+from utils import *
+from predict import Predictor
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',

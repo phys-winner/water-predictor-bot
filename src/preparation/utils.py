@@ -1,4 +1,4 @@
-from src.secret_auth import water_level_login
+from secret_auth import water_level_login
 
 
 class AuthError(Exception):

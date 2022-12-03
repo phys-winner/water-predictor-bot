@@ -4,8 +4,8 @@ from sklearn.preprocessing import minmax_scale
 import pandas as pd
 import numpy as np
 
-from src.utils import *
-from src.gismeteo_parse import get_weather_data, is_gismeteo_cached
+from utils import *
+from gismeteo_parse import get_weather_data, is_gismeteo_cached
 
 
 class Predictor:

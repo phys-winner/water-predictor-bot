@@ -2,8 +2,8 @@ from bs4 import BeautifulSoup
 from htmlmin import minify
 from calendar import monthrange
 
-from src.preparation.utils import AuthError, get_auth_data
-from src.utils import *
+from preparation.utils import AuthError, get_auth_data
+from utils import *
 
 # В данный модуль выделен код для обработки страниц Gismeteo из ноутбука
 # notebooks\parse_gismeteo.ipynb

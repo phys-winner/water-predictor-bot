@@ -3,8 +3,8 @@ from calendar import monthrange
 from bs4 import BeautifulSoup
 from htmlmin import minify
 
-from src.preparation.utils import AuthError, get_auth_data
-from src.utils import *
+from preparation.utils import AuthError, get_auth_data
+from utils import *
 
 BASE = 'https://gmvo.skniivh.ru/'
 LOGIN_URL = BASE + 'index.php?id=1'
