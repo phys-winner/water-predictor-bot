@@ -28,6 +28,10 @@ locale.setlocale(locale.LC_ALL, 'ru_RU')
 YEAR, MONTH, PREDICT = range(3)
 posts_info = open_file(DATA_POSTS_FULL_RAW, is_raw=True)
 posts_info = json.loads(posts_info)
+posts_info = {k: v for k, v in
+              sorted(posts_info.items(), key=lambda x: x[1]['name'])}
+sub_pools = {post['subpool_id']: post['subpool_name']
+             for post in posts_info.values()}
 
 uids_list = list(posts_info.keys())
 year_list = [x for x in range(2018, datetime.now().year + 1)]
@@ -100,20 +104,43 @@ def check_callback_date(update: Update):
 
 def start(update: Update, context: CallbackContext):
     keyboard = []
-    for uid, post in posts_info.items():
-        keyboard.append([InlineKeyboardButton(text=post['name'],
-                                              callback_data=uid)])
+    for uid, name in sub_pools.items():
+        keyboard.append([InlineKeyboardButton(text=name,
+                                              callback_data=f'query-' + uid)])
 
     reply_markup = InlineKeyboardMarkup(keyboard)
     if update.callback_query:
-        update.callback_query.message.edit_text(SELECT_POST,
+        update.callback_query.message.edit_text(SELECT_SUBPOOL,
                                                 parse_mode='HTML',
                                                 reply_markup=reply_markup)
     else:
-        update.message.reply_text(START_MESSAGE + SELECT_POST,
+        update.message.reply_text(START_MESSAGE + SELECT_SUBPOOL,
                                   parse_mode='HTML',
                                   reply_markup=reply_markup)
 
+
+def select_post(update: Update, context: CallbackContext):
+    callback_data = update.callback_query.data
+    callback_data = callback_data.split("-")
+    if len(callback_data) < 2 or callback_data[1] not in sub_pools.keys():
+        return invalid_data_msg(update)
+
+    subpool_uid = callback_data[1]
+    formatted_msg = SELECT_POST.format(sub_pools[subpool_uid])
+    keyboard = []
+    for uid, post in posts_info.items():
+        if subpool_uid == post['subpool_id']:
+            keyboard.append([InlineKeyboardButton(text=post['name'],
+                                                  callback_data=uid)])
+
+    #keyboard = [keyboard]
+    keyboard.append([InlineKeyboardButton(
+        text=BACK_LABEL,
+        callback_data='start')])
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    update.callback_query.message.edit_text(formatted_msg,
+                                            parse_mode='HTML',
+                                            reply_markup=reply_markup)
 
 def select_year(update: Update, context: CallbackContext):
     uid, _, _ = check_callback_date(update)
@@ -121,16 +148,16 @@ def select_year(update: Update, context: CallbackContext):
         return
 
     formatted_msg = SELECT_YEAR.format(posts_info[uid]['name'])
-    reply_keyboard = []
+    keyboard = []
     for i, year in enumerate(year_list):
-        reply_keyboard.append(InlineKeyboardButton(text=str(year),
+        keyboard.append(InlineKeyboardButton(text=str(year),
                                                    callback_data=f'{uid}-'
                                                                  f'{year}'))
-    reply_keyboard = [reply_keyboard]
-    reply_keyboard.append([InlineKeyboardButton(
+    keyboard = [keyboard]
+    keyboard.append([InlineKeyboardButton(
         text=BACK_LABEL,
         callback_data='start')])
-    reply_markup = InlineKeyboardMarkup(reply_keyboard)
+    reply_markup = InlineKeyboardMarkup(keyboard)
     update.callback_query.message.edit_text(formatted_msg,
                                             parse_mode='HTML',
                                             reply_markup=reply_markup)
@@ -142,7 +169,7 @@ def select_month(update: Update, context: CallbackContext):
         return
 
     formatted_msg = SELECT_MONTH.format(posts_info[uid]['name'], year)
-    reply_keyboard = []
+    keyboard = []
     last_month = 12
     if year == datetime.now().year:
         last_month = datetime.now().month - 1
@@ -155,15 +182,15 @@ def select_month(update: Update, context: CallbackContext):
                                               callback_data=f'{uid}-{year}-'
                                                             f'{month}'))
         if month % 4 == 0:
-            reply_keyboard.append(reply_row)
+            keyboard.append(reply_row)
             reply_row = []
 
     if len(reply_row) > 0:
-        reply_keyboard.append(reply_row)
+        keyboard.append(reply_row)
 
-    reply_keyboard.append([InlineKeyboardButton(text=BACK_LABEL,
+    keyboard.append([InlineKeyboardButton(text=BACK_LABEL,
                                                 callback_data=f'{uid}')])
-    reply_markup = InlineKeyboardMarkup(reply_keyboard)
+    reply_markup = InlineKeyboardMarkup(keyboard)
     update.callback_query.message.edit_text(formatted_msg,
                                             parse_mode='HTML',
                                             reply_markup=reply_markup)
@@ -237,11 +264,14 @@ def main():
     uid_regexp = r'^(\d+)$'
     year_regexp = r'^(\d+-\d{4})$'
     month_regexp = r'^(\d+-\d{4}-\d+)$'
+    subpool_regexp = r'^query-\d+$'
     start_regexp = r'^start$'
 
     dispatcher.add_handler(CommandHandler('start', start))
     dispatcher.add_handler(CallbackQueryHandler(start,
                                                 pattern=start_regexp))
+    dispatcher.add_handler(CallbackQueryHandler(select_post,
+                                                pattern=subpool_regexp))
     dispatcher.add_handler(CallbackQueryHandler(select_year,
                                                 pattern=uid_regexp))
     dispatcher.add_handler(CallbackQueryHandler(select_month,
