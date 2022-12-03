@@ -21,3 +21,7 @@ SELECT_MONTH = 'Выберите месяц:'
 
 # Placeholders
 SELECT_YEAR_PLACEHOLDER = 'Выберите год:'
+
+# Labels
+WATER_LEVEL = 'Уровень воды, см.'
+

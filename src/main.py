@@ -1,6 +1,9 @@
 import calendar
 import locale
 import logging
+import seaborn as sns
+import matplotlib
+import matplotlib.pyplot as plt
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram import ReplyKeyboardRemove, Update
@@ -145,9 +148,39 @@ def predict(update: Update, context: CallbackContext):
         return ConversationHandler.END
     result = predictor.predict(uid, year, month)
     print(result)
-    update.callback_query.message.edit_text(str(result), reply_markup=None)
-    #update.callback_query.message.edit_text(PREDICT_MESSAGE.format(uid, year, month),
-    #                                        reply_markup=None)
+
+    def add_margin(ax, x=-0.05):
+        # добавление отступов
+
+        xlim = ax.get_xlim()
+
+        xmargin = (xlim[1] - xlim[0]) * x
+
+        ax.set_xlim(xlim[0] - xmargin, xlim[1] + xmargin)
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+
+    fig = sns.lineplot(data=result, y='result', x='date')
+    plt.xlabel(month)
+    plt.ylabel(WATER_LEVEL)
+    plt.suptitle(posts_info[uid]['name'])
+    plt.title(f'Предсказание уровня воды за {year}-{month}')
+    #plt.legend()
+    plt.xticks(result['date'], labels=[x + 1 for x in range(result.shape[0])])
+
+    add_margin(fig, x=-0.045)
+    #plt.xlim(1, result.shape[0])
+    plt.savefig('test.png')
+    plt.close()
+
+    context.bot.send_photo(chat_id=update.callback_query.message.chat_id,
+                           photo=open('test.png', 'rb'),
+                           caption=str(result))
+
+    #update.callback_query.edit_message_reply_markup(None)  # убрать клавиатуру
+    #update.callback_query.message.edit_text(str(result), reply_markup=None)
+    update.callback_query.message.edit_text(PREDICT_MESSAGE.format(uid, year, month),
+                                            reply_markup=None)
     return ConversationHandler.END
 
 
@@ -168,6 +201,8 @@ def main():
     3. Выбор месяца
     4. Вывод прогноза
     """
+    matplotlib.use('Agg')  # отключить интерактивный режим matplotlib
+
     # Запуск бота
     updater = Updater(tg_bot_token)
     dispatcher = updater.dispatcher
