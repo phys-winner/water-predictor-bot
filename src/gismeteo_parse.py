@@ -81,7 +81,7 @@ def process_history_row(row):
 
 def form_historical_dataset(post, year, month):
     result = []
-    print(f"{post['name']} - год {year}")
+
     def get_data_rows(gismeteo_id):
         table = get_gismeteo_table(gismeteo_id, year, month)
         if not table:
