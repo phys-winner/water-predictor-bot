@@ -41,6 +41,19 @@ def invalid_data_msg(update: Update):
     return False
 
 
+def get_month_name(month, pretty=False):
+    result = calendar.month_name[month]
+    if pretty:
+        emoji = '🌱'  # весна
+        if month == 12 or month <= 2:  # зима
+            emoji = '❄'
+        elif month >= 9:  # осень
+            emoji = '🍂'
+        elif month >= 6:  # лето
+            emoji = '☀'
+        result = f'{emoji} {result}'
+    return result
+
 def check_callback_date(update: Update):
     """ Проверка значений, переданных через Callback кнопок.
     Обычный пользователь всегда будет проходить данные проверки.
@@ -96,37 +109,36 @@ def start(update: Update, context: CallbackContext):
         update.callback_query.message.edit_text(SELECT_POST,
                                                 reply_markup=reply_markup)
     else:
-        update.message.reply_text(START_MESSAGE)
-        update.message.reply_text(SELECT_POST, reply_markup=reply_markup)
+        update.message.reply_text(START_MESSAGE + SELECT_POST,
+                                  reply_markup=reply_markup)
 
 
 def select_year(update: Update, context: CallbackContext):
     uid, _, _ = check_callback_date(update)
     if not uid:
-        return ConversationHandler.END
+        return
 
+    formatted_msg = SELECT_YEAR.format(posts_info[uid]['name'])
     reply_keyboard = []
     for i, year in enumerate(year_list):
         reply_keyboard.append(InlineKeyboardButton(text=str(year),
                                                    callback_data=f'{uid}-'
                                                                  f'{year}'))
-
     reply_keyboard = [reply_keyboard]
     reply_keyboard.append([InlineKeyboardButton(
         text=BACK_LABEL,
         callback_data='start')])
     reply_markup = InlineKeyboardMarkup(reply_keyboard)
-
-    # update.callback_query.edit_message_reply_markup(None)  # скрыть клавиатуру
-    update.callback_query.message.edit_text(SELECT_YEAR,
+    update.callback_query.message.edit_text(formatted_msg,
                                             reply_markup=reply_markup)
 
 
 def select_month(update: Update, context: CallbackContext):
     uid, year, _ = check_callback_date(update)
     if not uid:
-        return ConversationHandler.END
+        return
 
+    formatted_msg = SELECT_MONTH.format(posts_info[uid]['name'], year)
     reply_keyboard = []
     last_month = 12
     if year == datetime.now().year:
@@ -134,7 +146,7 @@ def select_month(update: Update, context: CallbackContext):
 
     reply_row = []
     for month in range(1, last_month + 1):
-        month_str = f'{month} {calendar.month_name[month].lower()}'
+        month_str = get_month_name(month, pretty=True).lower()
 
         reply_row.append(InlineKeyboardButton(text=str(month_str),
                                               callback_data=f'{uid}-{year}-'
@@ -149,14 +161,14 @@ def select_month(update: Update, context: CallbackContext):
     reply_keyboard.append([InlineKeyboardButton(text=BACK_LABEL,
                                                 callback_data=f'{uid}')])
     reply_markup = InlineKeyboardMarkup(reply_keyboard)
-    update.callback_query.message.edit_text(SELECT_MONTH,
+    update.callback_query.message.edit_text(formatted_msg,
                                             reply_markup=reply_markup)
 
 
 def predict(update: Update, context: CallbackContext):
     uid, year, month = check_callback_date(update)
     if not uid:
-        return ConversationHandler.END
+        return
     if not predictor.is_cached_data(uid, year, month):
         update.callback_query.message.edit_text(PLEASE_WAIT_MESSAGE,
                                                 reply_markup=None)
@@ -180,13 +192,13 @@ def predict(update: Update, context: CallbackContext):
 
     plt.grid()
     plt.legend()
-    plt.xlabel(month)
+    plt.xticks(result['date'], labels=[x + 1 for x in range(result.shape[0])])
+    plt.xlabel(get_month_name(month))
     plt.ylabel(WATER_LEVEL)
     plt.suptitle(posts_info[uid]['name'])
-    plt.title(f'Предсказание уровня воды за {year}-{month}')
-    plt.xticks(result['date'], labels=[x + 1 for x in range(result.shape[0])])
+    plt.title(PREDICT_TITLE.format(get_month_name(month).lower(), year))
 
-    # уменьшение отступов
+    # уменьшение боковых отступов
     xlim = ax.get_xlim()
     xmargin = (xlim[1] - xlim[0]) * -0.045
     ax.set_xlim(xlim[0] - xmargin, xlim[1] + xmargin)
@@ -198,13 +210,9 @@ def predict(update: Update, context: CallbackContext):
         img.seek(0)
         context.bot.send_photo(chat_id=update.callback_query.message.chat_id,
                                photo=img,
-                               caption=str('test'))
+                               caption=PREDICT_MESSAGE.format(uid, year, month))
 
-    # update.callback_query.edit_message_reply_markup(None)  # убрать клавиатуру
-    # update.callback_query.message.edit_text(str(result), reply_markup=None)
-    update.callback_query.message.edit_text(
-        PREDICT_MESSAGE.format(uid, year, month),
-        reply_markup=None)
+    update.callback_query.message.delete()
 
 
 def main():
