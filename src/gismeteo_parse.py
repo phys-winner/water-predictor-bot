@@ -9,9 +9,11 @@ from src.utils import *
 # notebooks\parse_gismeteo.ipynb
 
 
-def get_gismeteo_table(city_id, year, month):
-    file_name = os.path.join('gismeteo', str(city_id),
-                             f'{year}-{month:02d}.html')
+def get_cached_filename(gismeteo_id, year, month):
+    return os.path.join('gismeteo', str(gismeteo_id), f'{year}-{month:02d}.html')
+
+def get_gismeteo_table(gismeteo_id, year, month):
+    file_name = get_cached_filename(gismeteo_id, year, month)
     if is_data_exists(file_name, is_raw=True):
         weather = open_file(file_name, is_raw=True)
         soup = BeautifulSoup(weather, 'lxml')
@@ -19,7 +21,7 @@ def get_gismeteo_table(city_id, year, month):
             return None
         return soup
     else:
-        url = f'https://www.gismeteo.ru/diary/{city_id}/{year}/{month}/'
+        url = f'https://www.gismeteo.ru/diary/{gismeteo_id}/{year}/{month}/'
         r = get_url(url)
         weather = r.text
         soup = BeautifulSoup(weather, 'lxml')
@@ -79,8 +81,8 @@ def process_history_row(row):
 def form_historical_dataset(post, year, month):
     result = []
     print(f"{post['name']} - год {year}")
-    def get_data_rows(city_id):
-        table = get_gismeteo_table(city_id, year, month)
+    def get_data_rows(gismeteo_id):
+        table = get_gismeteo_table(gismeteo_id, year, month)
         if not table:
             return None
 
@@ -149,6 +151,11 @@ def form_historical_dataset(post, year, month):
         result.append([date_string] + main_gps + data[1:] + [is_fallback])
         day += 1
     return result
+
+
+def is_gismeteo_cached(post, year, month):
+    file_name = get_cached_filename(post['gismeteo_id'], year, month)
+    return is_data_exists(file_name, is_raw=True)
 
 
 def get_weather_data(post, year, month):
