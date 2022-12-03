@@ -147,6 +147,10 @@ def predict(update: Update, context: CallbackContext):
     uid, year, month = check_callback_date(update)
     if not uid:
         return ConversationHandler.END
+    if not predictor.is_cached_data(uid, year, month):
+        update.callback_query.message.edit_text(PLEASE_WAIT_MESSAGE,
+                                                reply_markup=None)
+
     result = predictor.predict(uid, year, month)
     print(result)
 

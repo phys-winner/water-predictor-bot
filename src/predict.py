@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 
 from src.utils import *
-from src.gismeteo_parse import get_weather_data
+from src.gismeteo_parse import get_weather_data, is_gismeteo_cached
 
 
 class Predictor:
@@ -13,6 +13,10 @@ class Predictor:
         self.xgboost = XGBRegressor()
         self.xgboost.load_model(get_xgboost_path())
         self.posts = posts
+
+    def is_cached_data(self, uid, year, month):
+        current_post = self.posts[uid]
+        return is_gismeteo_cached(current_post, year, month)
 
     def predict(self, uid, year, month):
         current_post = self.posts[uid]
