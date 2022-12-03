@@ -1,6 +1,8 @@
-# ![App Icon](images/description_picture.png) Water Predictor
+![App Icon](images/description_picture.png)
+# Water Predictor
 
 **Water Predictor** - это написанный на Python бот в Telegram (протестировать: [@water_predictor_example_bot](https://t.me/water_predictor_example_bot)), который предсказывает уровень воды на постах гидрологического контроля рек **Подкаменная Тунгуска** и **Нижняя Тунгуска**, используя исторические метео-данные сервиса [Gismeteo.Дневник](https://www.gismeteo.ru/diary/) и машинное обучение.
+
 ![Пример поста с прогнозом](images/example_post.png)
 
 Данное приложение является итоговым проектом для курса **Аналитик данных (Data scientist)** МГТУ им. Н.Э. Баумана от слушателя Плужника Евгения Николаевича.
