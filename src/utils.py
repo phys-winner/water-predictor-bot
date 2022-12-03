@@ -14,6 +14,7 @@ DATA_WATER_LEVEL = 'water_level.csv'  # датасет с данными наб�
 DATA_WEATHER = 'weather.csv'  # датасет с погодой за 2008-2017
 # список с мин-макс данными для нормализации
 DATA_NORMALIZATION = 'normalization_info.json'
+DATA_WATER_STATS = 'water_stats.csv'
 
 DATA_PROCESSED_TRAIN = 'train_data.csv'  # готовый датасет для обучения модели
 
