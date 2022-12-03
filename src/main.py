@@ -107,9 +107,11 @@ def start(update: Update, context: CallbackContext):
     reply_markup = InlineKeyboardMarkup(keyboard)
     if update.callback_query:
         update.callback_query.message.edit_text(SELECT_POST,
+                                                parse_mode='HTML',
                                                 reply_markup=reply_markup)
     else:
         update.message.reply_text(START_MESSAGE + SELECT_POST,
+                                  parse_mode='HTML',
                                   reply_markup=reply_markup)
 
 
@@ -130,6 +132,7 @@ def select_year(update: Update, context: CallbackContext):
         callback_data='start')])
     reply_markup = InlineKeyboardMarkup(reply_keyboard)
     update.callback_query.message.edit_text(formatted_msg,
+                                            parse_mode='HTML',
                                             reply_markup=reply_markup)
 
 
@@ -162,6 +165,7 @@ def select_month(update: Update, context: CallbackContext):
                                                 callback_data=f'{uid}')])
     reply_markup = InlineKeyboardMarkup(reply_keyboard)
     update.callback_query.message.edit_text(formatted_msg,
+                                            parse_mode='HTML',
                                             reply_markup=reply_markup)
 
 
@@ -210,6 +214,7 @@ def predict(update: Update, context: CallbackContext):
         img.seek(0)
         context.bot.send_photo(chat_id=update.callback_query.message.chat_id,
                                photo=img,
+                               parse_mode='HTML',
                                caption=PREDICT_MESSAGE.format(uid, year, month))
 
     update.callback_query.message.delete()
