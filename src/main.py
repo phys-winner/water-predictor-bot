@@ -4,6 +4,7 @@ import logging
 import seaborn as sns
 import matplotlib
 import matplotlib.pyplot as plt
+from io import BytesIO
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram import ReplyKeyboardRemove, Update
@@ -149,17 +150,7 @@ def predict(update: Update, context: CallbackContext):
     result = predictor.predict(uid, year, month)
     print(result)
 
-    def add_margin(ax, x=-0.05):
-        # добавление отступов
-
-        xlim = ax.get_xlim()
-
-        xmargin = (xlim[1] - xlim[0]) * x
-
-        ax.set_xlim(xlim[0] - xmargin, xlim[1] + xmargin)
-
     fig, ax = plt.subplots(figsize=(12, 6))
-
     fig = sns.lineplot(data=result, y='result', x='date')
     plt.xlabel(month)
     plt.ylabel(WATER_LEVEL)
@@ -168,14 +159,19 @@ def predict(update: Update, context: CallbackContext):
     #plt.legend()
     plt.xticks(result['date'], labels=[x + 1 for x in range(result.shape[0])])
 
-    add_margin(fig, x=-0.045)
-    #plt.xlim(1, result.shape[0])
-    plt.savefig('test.png')
-    plt.close()
+    # уменьшение отступов
+    xlim = ax.get_xlim()
+    xmargin = (xlim[1] - xlim[0]) * -0.045
+    ax.set_xlim(xlim[0] - xmargin, xlim[1] + xmargin)
 
-    context.bot.send_photo(chat_id=update.callback_query.message.chat_id,
-                           photo=open('test.png', 'rb'),
-                           caption=str(result))
+    with BytesIO() as img:
+        plt.savefig(img, format='png')
+        plt.close()
+
+        img.seek(0)
+        context.bot.send_photo(chat_id=update.callback_query.message.chat_id,
+                               photo=img,
+                               caption=str(result))
 
     #update.callback_query.edit_message_reply_markup(None)  # убрать клавиатуру
     #update.callback_query.message.edit_text(str(result), reply_markup=None)
