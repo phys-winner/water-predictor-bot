@@ -92,8 +92,12 @@ def start(update: Update, context: CallbackContext):
                                               callback_data=uid)])
 
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text(START_MESSAGE)
-    update.message.reply_text(SELECT_POST, reply_markup=reply_markup)
+    if update.callback_query:
+        update.callback_query.message.edit_text(SELECT_POST,
+                                                reply_markup=reply_markup)
+    else:
+        update.message.reply_text(START_MESSAGE)
+        update.message.reply_text(SELECT_POST, reply_markup=reply_markup)
 
 
 def select_year(update: Update, context: CallbackContext):
@@ -106,7 +110,12 @@ def select_year(update: Update, context: CallbackContext):
         reply_keyboard.append(InlineKeyboardButton(text=str(year),
                                                    callback_data=f'{uid}-'
                                                                  f'{year}'))
-    reply_markup = InlineKeyboardMarkup([reply_keyboard])
+
+    reply_keyboard = [reply_keyboard]
+    reply_keyboard.append([InlineKeyboardButton(
+        text=BACK_LABEL,
+        callback_data='start')])
+    reply_markup = InlineKeyboardMarkup(reply_keyboard)
 
     # update.callback_query.edit_message_reply_markup(None)  # скрыть клавиатуру
     update.callback_query.message.edit_text(SELECT_YEAR,
@@ -128,7 +137,8 @@ def select_month(update: Update, context: CallbackContext):
         month_str = f'{month} {calendar.month_name[month].lower()}'
 
         reply_row.append(InlineKeyboardButton(text=str(month_str),
-                                              callback_data=f'{uid}-{year}-{month}'))
+                                              callback_data=f'{uid}-{year}-'
+                                                            f'{month}'))
         if month % 4 == 0:
             reply_keyboard.append(reply_row)
             reply_row = []
@@ -136,6 +146,8 @@ def select_month(update: Update, context: CallbackContext):
     if len(reply_row) > 0:
         reply_keyboard.append(reply_row)
 
+    reply_keyboard.append([InlineKeyboardButton(text=BACK_LABEL,
+                                                callback_data=f'{uid}')])
     reply_markup = InlineKeyboardMarkup(reply_keyboard)
     update.callback_query.message.edit_text(SELECT_MONTH,
                                             reply_markup=reply_markup)
@@ -212,8 +224,11 @@ def main():
     uid_regexp = r'^(\d+)$'
     year_regexp = r'^(\d+-\d{4})$'
     month_regexp = r'^(\d+-\d{4}-\d+)$'
+    start_regexp = r'^start$'
 
     dispatcher.add_handler(CommandHandler('start', start))
+    dispatcher.add_handler(CallbackQueryHandler(start,
+                                                pattern=start_regexp))
     dispatcher.add_handler(CallbackQueryHandler(select_year,
                                                 pattern=uid_regexp))
     dispatcher.add_handler(CallbackQueryHandler(select_month,
