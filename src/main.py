@@ -153,13 +153,21 @@ def predict(update: Update, context: CallbackContext):
     result = predictor.predict(uid, year, month)
 
     fig, ax = plt.subplots(figsize=(12, 6))
-    sns.lineplot(data=result, y='result', x='date', label=PREDICTED_VALUE)
+    sns.lineplot(data=result, y='result', x='date', label=PREDICTED_VALUE,
+                 ax=ax, linewidth=5)
     sns.lineplot(data=result, y='min', x='date', label=HISTORY_MIN,
-                 linestyle='dashed')
+                 linestyle='dashed', ax=ax, linewidth=3)
     sns.lineplot(data=result, y='mean', x='date', label=HISTORY_MEAN,
-                 linestyle='dotted')
+                 linestyle='dotted', ax=ax, linewidth=3)
     sns.lineplot(data=result, y='max', x='date', label=HISTORY_MAX,
-                 linestyle='dashed')
+                 linestyle='dashed', ax=ax, linewidth=3)
+
+    # после заполнения цветом график сдвигается вверх, необходимо сохранить
+    # ограничение графика по y и его же установить после заполнения
+    orig_ylim = ax.get_ylim()
+    ax.fill_between(result['date'], result['result'], alpha=0.2)
+    ax.set_ylim(orig_ylim)
+
     plt.grid()
     plt.legend()
     plt.xlabel(month)
