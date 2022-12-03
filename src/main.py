@@ -34,9 +34,10 @@ year_list = [x for x in range(2018, datetime.now().year + 1)]
 
 predictor = Predictor(posts_info)
 
+
 def invalid_data_msg(update: Update):
     update.callback_query.message.reply_text(INVALID_DATA_MESSAGE,
-                                         reply_markup=ReplyKeyboardRemove())
+                                             reply_markup=ReplyKeyboardRemove())
     return False
 
 
@@ -93,7 +94,6 @@ def start(update: Update, context: CallbackContext):
     reply_markup = InlineKeyboardMarkup(keyboard)
     update.message.reply_text(START_MESSAGE)
     update.message.reply_text(SELECT_POST, reply_markup=reply_markup)
-    return YEAR
 
 
 def select_year(update: Update, context: CallbackContext):
@@ -111,7 +111,6 @@ def select_year(update: Update, context: CallbackContext):
     # update.callback_query.edit_message_reply_markup(None)  # скрыть клавиатуру
     update.callback_query.message.edit_text(SELECT_YEAR,
                                             reply_markup=reply_markup)
-    return MONTH
 
 
 def select_month(update: Update, context: CallbackContext):
@@ -140,7 +139,6 @@ def select_month(update: Update, context: CallbackContext):
     reply_markup = InlineKeyboardMarkup(reply_keyboard)
     update.callback_query.message.edit_text(SELECT_MONTH,
                                             reply_markup=reply_markup)
-    return PREDICT
 
 
 def predict(update: Update, context: CallbackContext):
@@ -190,20 +188,11 @@ def predict(update: Update, context: CallbackContext):
                                photo=img,
                                caption=str('test'))
 
-    #update.callback_query.edit_message_reply_markup(None)  # убрать клавиатуру
-    #update.callback_query.message.edit_text(str(result), reply_markup=None)
-    update.callback_query.message.edit_text(PREDICT_MESSAGE.format(uid, year, month),
-                                            reply_markup=None)
-    return ConversationHandler.END
-
-
-def cancel(update: Update, context: CallbackContext):
-    update.message.reply_text(
-        'Вы успешно отменили запрос.',
-        reply_markup=ReplyKeyboardRemove()
-    )
-
-    return ConversationHandler.END
+    # update.callback_query.edit_message_reply_markup(None)  # убрать клавиатуру
+    # update.callback_query.message.edit_text(str(result), reply_markup=None)
+    update.callback_query.message.edit_text(
+        PREDICT_MESSAGE.format(uid, year, month),
+        reply_markup=None)
 
 
 def main():
@@ -224,18 +213,13 @@ def main():
     year_regexp = r'^(\d+-\d{4})$'
     month_regexp = r'^(\d+-\d{4}-\d+)$'
 
-    conv_handler = ConversationHandler(
-        entry_points=[CommandHandler('start', start)],
-        states={
-            YEAR: [CallbackQueryHandler(select_year, pattern=uid_regexp)],
-            MONTH: [CallbackQueryHandler(select_month, pattern=year_regexp)],
-            PREDICT: [CallbackQueryHandler(predict, pattern=month_regexp)]
-        },
-        fallbacks=[CommandHandler('cancel', cancel)],
-
-    )
-
-    dispatcher.add_handler(conv_handler)
+    dispatcher.add_handler(CommandHandler('start', start))
+    dispatcher.add_handler(CallbackQueryHandler(select_year,
+                                                pattern=uid_regexp))
+    dispatcher.add_handler(CallbackQueryHandler(select_month,
+                                                pattern=year_regexp))
+    dispatcher.add_handler(CallbackQueryHandler(predict,
+                                                pattern=month_regexp))
 
     updater.start_polling()
     updater.idle()
