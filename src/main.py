@@ -63,7 +63,6 @@ def check_callback_date(update: Update):
     Обычный пользователь всегда будет проходить данные проверки.
     """
     callback_data = update.callback_query.data
-    print(callback_data)
     callback_data = callback_data.split("-")
     uid, year, month = None, None, None
     is_valid = True
@@ -234,15 +233,23 @@ def predict(update: Update, context: CallbackContext):
     xmargin = (xlim[1] - xlim[0]) * -0.045
     ax.set_xlim(xlim[0] - xmargin, xlim[1] + xmargin)
 
+    post = posts_info[uid]
+    yandex_url = f"https://yandex.ru/maps/?ll={post['longitude']}%2C{post['latitude']}&z=14"
+    formatted_msg = PREDICT_MESSAGE.format(post['name'],
+                                           get_month_name(month).lower(), year,
+                                           post['subpool_name'],
+                                           yandex_url,
+                                           f"https://ru.wikipedia.org/wiki/{post['wiki_page']}",
+                                           f"https://www.gismeteo.ru/diary/{post['gismeteo_id']}/{year}/{month}")
+
     with BytesIO() as img:
         plt.savefig(img, format='png')
         plt.close()
 
         img.seek(0)
         context.bot.send_photo(chat_id=update.callback_query.message.chat_id,
-                               photo=img,
-                               parse_mode='HTML',
-                               caption=PREDICT_MESSAGE.format(uid, year, month))
+                               photo=img, parse_mode='HTML',
+                               caption=formatted_msg)
 
     update.callback_query.message.delete()
 

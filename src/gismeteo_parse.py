@@ -12,6 +12,7 @@ from src.utils import *
 def get_cached_filename(gismeteo_id, year, month):
     return os.path.join('gismeteo', str(gismeteo_id), f'{year}-{month:02d}.html')
 
+
 def get_gismeteo_table(gismeteo_id, year, month):
     file_name = get_cached_filename(gismeteo_id, year, month)
     if is_data_exists(file_name, is_raw=True):
