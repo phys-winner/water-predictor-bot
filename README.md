@@ -45,15 +45,15 @@
 
 Разработан парсер данных наблюдений с постов гидрологического контроля сайта **АИС ГМВО** (автоматизированной информационной системы государственного мониторинга водных объектов Российской Федерации).
 
-2. [*src/notebooks/parse_gismeteo.ipynb*](notebooks/parse_gismeteo.ipynb)
+2. [*notebooks/parse_gismeteo.ipynb*](notebooks/parse_gismeteo.ipynb)
 
 Разработан парсер исторических метео-данных сервиса [Gismeteo.Дневник](https://www.gismeteo.ru/diary/).
 
-3. [*src/notebooks/eda.ipynb*](notebooks/eda.ipynb)
+3. [*notebooks/eda.ipynb*](notebooks/eda.ipynb)
 
 Произведён анализ и предварительная обработка датасета.
 
-4. [*src/notebooks/algo_research.ipynb*](notebooks/algo_research.ipynb)
+4. [*notebooks/algo_research.ipynb*](notebooks/algo_research.ipynb)
 
 Выполнено исследование работы 14 алгоритмов машинного обучения (в т.ч. с использованием нейронных сетей) и выбрана лучшая модель - **настроенный XGBoost**.
 
@@ -61,12 +61,19 @@
 
 Разработан бот для Telegram, который предсказывает уровень воды на постах, используя данные, которые предоставил пользователь и сервис [Gismeteo.Дневник](https://www.gismeteo.ru/diary/).
 
-## Установка и запуск
+## Установка
 
     git clone https://github.com/phys-winner/water-predictor-bot
     cd water-predictor-bot
-    python setup.py install
+    git checkout
+    py -m venv env
+    .\env\Scripts\pip install -r requirements.txt
 
+## Запуск
+Перед первым запуском создайте файл **src\secret_auth.example.py** ([**пример**](src/secret_auth.example.py)) и укажите в нём логин и пароль от сайта АИС ГМВО, а также токен для бота Telegram.
+
+    cd water-predictor-bot
+    .\env\Scripts\python src\main.py
 
 ## Использованные данные и технологии
 
