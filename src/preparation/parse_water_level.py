@@ -129,14 +129,27 @@ def get_data_posts(auth_cookie, district, pool, subpools):
     # pool_uid = 17
 
     # Получение списка подбассейнов по их названиям через ид бассейна
-    params = {'uid': pool_uid}
-    subpool_uids = get_data(GET_SUBPOOLS_URL, params,
-                            target_string=subpools,
-                            target_name='Подбассейны')
-    # subpool_uids = [114, 124]
+    file_name = f'water_get_sb_{pool_uid}.json'
+    if is_data_exists(file_name, is_raw=True):
+        subpool_info = open_file(file_name, is_raw=True)
+        lst = json.loads(subpool_info)
+    else:
+        params = {'uid': pool_uid}
+        r = get_url(GET_SUBPOOLS_URL, params=params, cookies=auth_cookie)
+        soup = BeautifulSoup(r.text, 'lxml')
+        subpool_info = soup.text
 
+        lst = json.loads(subpool_info)
+        write_data(file_name, data=lst, is_raw=True)
+
+    subpool_uids = {}
+    for entry in lst:
+        if entry['NAME'] in subpools:
+            subpool_uids[entry['uid']] = entry['NAME']
+
+    # Получение пунктов наблюдения из списка подбассейнов
     posts = {}  # uid: name
-    for subpool_uid in subpool_uids:
+    for uid, name in subpool_uids.items():
         params = {
             'table': 'gm_waterlevel_river,'
                      'gm_waterlevel_river_day,'
@@ -144,11 +157,11 @@ def get_data_posts(auth_cookie, district, pool, subpools):
                      'gm_waterlevel_river_decade',
             'sbo': district_uid,
             'srb': pool_uid,
-            'ssb': subpool_uid,
+            'ssb': uid,
             'shep': 0,
             'uid_form': 7
         }
-        file_name = f'water_get_hpr_{subpool_uid}.json'
+        file_name = f'water_get_hpr_{uid}.json'
         if is_data_exists(file_name, is_raw=True):
             subpool_info = open_file(file_name, is_raw=True)
             lst = json.loads(subpool_info)
@@ -161,7 +174,8 @@ def get_data_posts(auth_cookie, district, pool, subpools):
             write_data(file_name, data=lst, is_raw=True)
 
         posts.update({entry['kod_hp']: {'name': entry['name_hp'],
-                                        'subpool_id': entry['attachment'],
+                                        'subpool_id': uid,
+                                        'subpool_name': name,
                                         'cadid': entry['CADID'],
                                         'water_site': entry['name_wo']}
                       for entry in lst})
