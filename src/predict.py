@@ -13,6 +13,9 @@ class Predictor:
         self.xgboost = XGBRegressor()
         self.xgboost.load_model(get_xgboost_path())
         self.posts = posts
+        self.water_stats = pd.read_csv(get_filepath(DATA_WATER_STATS,
+                                                    is_raw=False),
+                                       dtype={'uid': str})
 
     def is_cached_data(self, uid, year, month):
         current_post = self.posts[uid]
@@ -23,16 +26,18 @@ class Predictor:
 
         weather_data = get_weather_data(current_post, year, month)
         df = _prepare_dataframe(uid, weather_data)
-        dates = df['date']
-
-        df = df.drop(['date'], axis=1)
-        predict = self.xgboost.predict(df)
+        predict = self.xgboost.predict(df.drop(['date'], axis=1))
         #predict = np.rint(predict)  # округление чисел до целых
 
         result = pd.DataFrame({
-            "date": dates,
+            "date": df['date'],
+            "day_of_year": df['date'].dt.dayofyear,
             "result": predict
         })
+        stats = self.water_stats[self.water_stats['uid'] == uid]
+        stats = stats.drop(['uid'], axis=1)
+
+        result = result.merge(stats, on='day_of_year', how='inner')
         return result
 
 

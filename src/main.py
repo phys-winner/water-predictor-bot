@@ -150,17 +150,22 @@ def predict(update: Update, context: CallbackContext):
     if not predictor.is_cached_data(uid, year, month):
         update.callback_query.message.edit_text(PLEASE_WAIT_MESSAGE,
                                                 reply_markup=None)
-
     result = predictor.predict(uid, year, month)
-    print(result)
 
     fig, ax = plt.subplots(figsize=(12, 6))
-    fig = sns.lineplot(data=result, y='result', x='date')
+    sns.lineplot(data=result, y='result', x='date', label=PREDICTED_VALUE)
+    sns.lineplot(data=result, y='min', x='date', label=HISTORY_MIN,
+                 linestyle='dashed')
+    sns.lineplot(data=result, y='mean', x='date', label=HISTORY_MEAN,
+                 linestyle='dotted')
+    sns.lineplot(data=result, y='max', x='date', label=HISTORY_MAX,
+                 linestyle='dashed')
+    plt.grid()
+    plt.legend()
     plt.xlabel(month)
     plt.ylabel(WATER_LEVEL)
     plt.suptitle(posts_info[uid]['name'])
     plt.title(f'Предсказание уровня воды за {year}-{month}')
-    #plt.legend()
     plt.xticks(result['date'], labels=[x + 1 for x in range(result.shape[0])])
 
     # уменьшение отступов
@@ -175,7 +180,7 @@ def predict(update: Update, context: CallbackContext):
         img.seek(0)
         context.bot.send_photo(chat_id=update.callback_query.message.chat_id,
                                photo=img,
-                               caption=str(result))
+                               caption=str('test'))
 
     #update.callback_query.edit_message_reply_markup(None)  # убрать клавиатуру
     #update.callback_query.message.edit_text(str(result), reply_markup=None)
